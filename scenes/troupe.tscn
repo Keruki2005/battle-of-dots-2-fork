@@ -1,13 +1,11 @@
 [gd_scene format=3 uid="uid://b33336v7qhm6"]
 
 [ext_resource type="Script" uid="uid://bg15pn0kgu1ij" path="res://scripts/troupe.gd" id="1_hpa3k"]
-[ext_resource type="PackedScene" uid="uid://uqyfp3adi5c6" path="res://scenes/waypoint.tscn" id="2_1nx0g"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_hpa3k"]
 
 [node name="CharacterBody2D" type="CharacterBody2D" unique_id=1468128866]
 script = ExtResource("1_hpa3k")
-waypoint = ExtResource("2_1nx0g")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=75475748]
 scale = Vector2(20, 20)

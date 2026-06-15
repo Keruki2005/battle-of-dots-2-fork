@@ -1,10 +1,12 @@
 extends CharacterBody2D
 
-@export var waypoint: PackedScene
+var waypoint: PackedScene = preload("res://scenes/waypoint.tscn")
+var troupe_scene: PackedScene = preload("res://scenes/troupe.tscn")
 
 @export var radius := 20.0 # circle texture radius
 @export var color_unselected := Color(1, 0, 0, 1)
 @export var color_selected := Color(0.833, 0.0, 0.0, 1.0)
+var label: Label = null
 var waypoints := [] # waypoind Vector2 coords
 var selected := false # apply new waypoints if true
 var target: Vector2 # next waypoint
@@ -12,6 +14,8 @@ var target_num := 0 # index of next target
 var path_end := false # true when troupe reached last waypoint
 var waypoint_objs := [] # collects waypoint game objects
 var moving := false
+var stacked_num := 1
+var selected_num := 0
 
 static var selected_troupe: Array[CharacterBody2D] = []
 
@@ -22,28 +26,52 @@ func _draw():
 func _ready():
 	queue_redraw()
 	add_to_group("troupes")
+	if stacked_num > 1:
+		relabel()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("waypoint_on_cursor"):
 		# spawn waypoint on mouse click
-		if self in selected_troupe:
+		if self in selected_troupe and selected_num == stacked_num:
 			var obj = waypoint.instantiate()
 			waypoint_objs.append(obj)
 			obj.global_position = get_global_mouse_position()
 			print(obj.global_position)
 			get_tree().get_current_scene().add_child(obj)
 			waypoints.append(obj.global_position)
+		elif self in selected_troupe and selected_num < stacked_num:
+			if waypoint_objs.size() == 0:
+				var newtroupe = troupe_scene.instantiate()
+				newtroupe.stacked_num = selected_num
+				newtroupe.global_position = global_position
+				selected_troupe.append(newtroupe)
+				var obj = waypoint.instantiate()
+				newtroupe.waypoint_objs.append(obj)
+				obj.global_position = get_global_mouse_position()
+				print(obj.global_position)
+				get_tree().get_current_scene().add_child(obj)
+				newtroupe.waypoints.append(obj.global_position)
+				get_tree().get_current_scene().add_child(newtroupe)
+				newtroupe.relabel()
+				stacked_num = stacked_num - selected_num
+				relabel()
+				reset()
 	elif event.is_action_pressed("select"):
 		var troupes = get_tree().get_nodes_in_group("troupes")
 		for troupe in troupes:
 			if troupe.moving:
 				selected_troupe.erase(troupe)
 				troupe.toggle_color()
-		if self in selected_troupe:
-			return
 		if global_position.distance_to(get_global_mouse_position()) <= 10: # select troupe with mouse click
-			reset()
-			selected_troupe.append(self)
+			if moving:
+				reset()
+			if self not in selected_troupe:
+				selected_troupe.append(self)
+			if selected_num == 0:
+				selected_num = 1
+			elif selected_num < stacked_num:
+				selected_num += 1
+			print(selected_num)
 			toggle_color()
 			get_viewport().set_input_as_handled()
 			return
@@ -55,6 +83,13 @@ func _process(delta: float) -> void:
 		path_end = false
 		if global_position.distance_to(waypoints[-1]) < 1.0: # when last waypoint is reached
 			reset()
+			var troupes = get_tree().get_nodes_in_group("troupes")
+			for troupe in troupes:
+				if global_position.distance_to(troupe.global_position) < 6 and troupe.moving == false and troupe != self:
+					troupe.stacked_num += 1
+					troupe.relabel()
+					queue_free()
+					return
 		if not path_end: # Move to next waypoint
 			if target_num >= waypoints.size():
 				moving = false
@@ -68,6 +103,7 @@ func reset():
 	# reset everything eg when last waypoint is reached
 	path_end = true
 	moving = false
+	selected_num = 0
 	waypoints.clear()
 	print("Path ended")
 	target_num = 0
@@ -84,4 +120,12 @@ func toggle_color():
 	else:
 		color = color_unselected
 	queue_redraw()
+
+func relabel():
+	if label:
+		label.queue_free()
+	if stacked_num > 1:
+		label = Label.new()
+		label.text = str(stacked_num)
+		add_child(label)
 	
