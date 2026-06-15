@@ -5,7 +5,7 @@ var troupe_scene: PackedScene = preload("res://scenes/troupe.tscn")
 
 @export var radius := 20.0 # circle texture radius
 @export var color_unselected := Color(1, 0, 0, 1)
-@export var color_selected := Color(0.833, 0.0, 0.0, 1.0)
+@export var color_selected := Color(0.8, 0.0, 0.0, 1.0)
 var label: Label = null
 var waypoints := [] # waypoind Vector2 coords
 var selected := false # apply new waypoints if true
@@ -41,6 +41,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			waypoints.append(obj.global_position)
 			selected_num = 0
 			relabel()
+		if self in selected_troupe and moving:
+			var obj = waypoint.instantiate()
+			waypoint_objs.append(obj)
+			obj.global_position = get_global_mouse_position()
+			print(obj.global_position)
+			get_tree().get_current_scene().add_child(obj)
+			waypoints.append(obj.global_position)
 		elif self in selected_troupe and selected_num < stacked_num:
 			if waypoint_objs.size() == 0:
 				var newtroupe = troupe_scene.instantiate()
