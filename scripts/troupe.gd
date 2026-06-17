@@ -21,8 +21,10 @@ var selected_num := 0 # quantity of selected troups of stack
 # dict team -> color with lists for colors, with first (index 0) color for unselected troupes and second (index 1) color for selected troupes
 @export var team_colors := {"red": [Color(1, 0, 0, 1), Color(0.8, 0.0, 0.0, 1.0)], "green": [Color(0, 1, 0, 1), Color(0, 0.8, 0, 1)]}
 @export var team := "green"
+var bot := true
 
 static var selected_troupe: Array[CharacterBody2D] = []
+static var latest_selected: CharacterBody2D
 
 var color: Color
 func _draw():
@@ -38,79 +40,92 @@ func _ready():
 		color = color_unselected
 	queue_redraw()
 	add_to_group("troupes")
+	if bot:
+		var parent = get_parent()
+		parent.move_child(self, 0)
 	relabel()
 
 func _unhandled_input(event: InputEvent) -> void:
-	# spawn waypoint on mouse click
-	if event.is_action_pressed("waypoint_on_cursor"):
+	if !bot:
+		# spawn waypoint on mouse click
+		if event.is_action_pressed("waypoint_on_cursor"):
 
-		# new waypoint for whole stack
-		if self in selected_troupe and selected_num == stacked_num:
-			var obj = waypoint.instantiate()
-			waypoint_objs.append(obj)
-			obj.global_position = get_global_mouse_position()
-			print(obj.global_position)
-			get_tree().get_current_scene().add_child(obj)
-			waypoints.append(obj.global_position)
-			selected_num = 0
-			relabel()
-			continue_line()
-
-		# set new waypoint while moving
-		if self in selected_troupe and moving:
-			var obj = waypoint.instantiate()
-			waypoint_objs.append(obj)
-			obj.global_position = get_global_mouse_position()
-			print(obj.global_position)
-			get_tree().get_current_scene().add_child(obj)
-			waypoints.append(obj.global_position)
-			continue_line()
-
-		# send part of troupe stack (spawns new troupe stack)
-		elif self in selected_troupe and selected_num < stacked_num:
-			if waypoint_objs.size() == 0:
-				var newtroupe = troupe_scene.instantiate()
-				newtroupe.team = team
-				newtroupe.stacked_num = selected_num
-				newtroupe.global_position = global_position
-				selected_troupe.append(newtroupe)
+			# new waypoint for whole stack
+			if self in selected_troupe and selected_num == stacked_num:
 				var obj = waypoint.instantiate()
-				newtroupe.waypoint_objs.append(obj)
+				waypoint_objs.append(obj)
 				obj.global_position = get_global_mouse_position()
 				print(obj.global_position)
 				get_tree().get_current_scene().add_child(obj)
-				newtroupe.waypoints.append(obj.global_position)
-				get_tree().get_current_scene().add_child(newtroupe)
-				newtroupe.relabel()
-				newtroupe.continue_line()
-				stacked_num = stacked_num - selected_num
-				reset()
+				waypoints.append(obj.global_position)
+				selected_num = 0
+				relabel()
+				continue_line()
 
-	# select troupe with mouse click
-	elif event.is_action_pressed("select"):
-		var troupes = get_tree().get_nodes_in_group("troupes")
-		for troupe in troupes:
-			if troupe.moving:
-				selected_troupe.erase(troupe)
-				troupe.toggle_color()
-		if global_position.distance_to(get_global_mouse_position()) <= 10:
-			if moving:
-				reset() # stop moving troupe if clicked on
-			if self not in selected_troupe:
-				selected_troupe.append(self)
-			if selected_num == 0:
-				selected_num = 1
-				relabel()
-			elif selected_num < stacked_num:
-				selected_num += 1
-				relabel()
-			toggle_color()
-			get_viewport().set_input_as_handled() # important so that only one troupe will be selected with one click
-			return
-			
-	# stop selected troupe and deselect all troupes
-	elif event.is_action_pressed("cancel") and self in selected_troupe:
-		reset()
+			# set new waypoint while moving
+			if self in selected_troupe and moving:
+				var obj = waypoint.instantiate()
+				waypoint_objs.append(obj)
+				obj.global_position = get_global_mouse_position()
+				print(obj.global_position)
+				get_tree().get_current_scene().add_child(obj)
+				waypoints.append(obj.global_position)
+				continue_line()
+
+			# send part of troupe stack (spawns new troupe stack)
+			elif self in selected_troupe and selected_num < stacked_num:
+				if waypoint_objs.size() == 0:
+					var newtroupe = troupe_scene.instantiate()
+					newtroupe.team = team
+					newtroupe.stacked_num = selected_num
+					newtroupe.global_position = global_position
+					newtroupe.bot = false
+					selected_troupe.append(newtroupe)
+					var obj = waypoint.instantiate()
+					newtroupe.waypoint_objs.append(obj)
+					obj.global_position = get_global_mouse_position()
+					print(obj.global_position)
+					get_tree().get_current_scene().add_child(obj)
+					newtroupe.waypoints.append(obj.global_position)
+					get_tree().get_current_scene().add_child(newtroupe)
+					var parent = newtroupe.get_parent()
+					parent.move_child(newtroupe, 0)
+					newtroupe.relabel()
+					newtroupe.continue_line()
+					stacked_num = stacked_num - selected_num
+					reset()
+
+		# select troupe with mouse click
+		elif event.is_action_pressed("select"):
+			var troupes = get_tree().get_nodes_in_group("troupes")
+			for troupe in troupes:
+				if troupe.moving:
+					selected_troupe.erase(troupe)
+					troupe.toggle_color()
+			if global_position.distance_to(get_global_mouse_position()) <= 10:
+				if moving:
+					reset() # stop moving troupe if clicked on
+				if self not in selected_troupe:
+					selected_troupe.append(self)
+				if selected_num == 0:
+					selected_num = 1
+					relabel()
+				elif selected_num < stacked_num:
+					selected_num += 1
+					relabel()
+				toggle_color()
+				latest_selected = self
+				get_viewport().set_input_as_handled() # important so that only one troupe will be selected with one click
+				return
+				
+		# stop selected troupe and deselect all troupes
+		elif event.is_action_pressed("cancel") and self in selected_troupe:
+			reset()
+		
+		# select whole stack
+		elif event.is_action_pressed("select_all") and latest_selected == self and !moving and self in selected_troupe:
+			selected_num = stacked_num
+			relabel()
 			
 func _process(delta: float) -> void:
 	if waypoints:

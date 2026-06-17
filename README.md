@@ -7,11 +7,12 @@ Battle of Dots 2 is a simple RTS inspired by War of Dots.
 To play or develop, clone the repository and import the project folder into Godot 4.6 unsing the Project Manager of Godot (the window that opens on Godot's startup). **Issues and pull requests are welcome!**
 
 ## Controls
-|action                                       |key                  |
-|---------------------------------------------|---------------------|
-|select                                       |right mouse button   |
-|new waypoint                                 |left mouse button    |
-|deselect all troupes and stop selected troupe|C                    |
-|stop a moving troupe                         |right click on troupe|
+|action                                                  |key                  |
+|--------------------------------------------------------|---------------------|
+|select a troupe                                         |right mouse button   |
+|select a whole stack after selecting one troupe of stack|A
+|new waypoint                                            |left mouse button    |
+|deselect all troupes and stop selected troupe           |C                    |
+|stop a moving troupe                                    |right click on troupe|
 
 Sending a troupe on top of another troupe will stack them. To select a certain number of troupes on a stack, right click that number of times on the stack.
