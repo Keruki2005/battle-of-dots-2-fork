@@ -9,10 +9,10 @@ To play or develop, clone the repository and import the project folder into Godo
 ## Controls
 |action                                                  |key                  |
 |--------------------------------------------------------|---------------------|
-|select a troupe                                         |right mouse button   |
-|select a whole stack after selecting one troupe of stack|A
+|select a unit                                         |right mouse button   |
+|select a whole stack after selecting one unit of stack|A
 |new waypoint                                            |left mouse button    |
-|deselect all troupes and stop selected troupe           |C                    |
-|stop a moving troupe                                    |right click on troupe|
+|deselect all units and stop selected unit           |C                    |
+|stop a moving unit                                    |right click on unit|
 
-Sending a troupe on top of another troupe will stack them. To select a certain number of troupes on a stack, right click that number of times on the stack.
+Sending a unit on top of another unit will stack them. To select a certain number of units on a stack, right click that number of times on the stack.
